@@ -1,5 +1,6 @@
 from queue import Queue
 
+
 def parse_coords(lines):
     parsed = [line.split(",",2) for line in lines if "," in line]
     return [(int(x), (int(y))) for (x,y) in parsed]
@@ -33,17 +34,24 @@ def distance(left,right):
     return (distance,left,right)
 
 
+def coords_in_bounds(bounds):
+    (orig_x, orig_y, width, height) = bounds
+    for x in range(orig_x, orig_x + width):
+        for y in range(orig_y, orig_y + height):
+            yield(x,y)
+
+
 def adjacency(coords, bounds):
-    (orig_x,orig_y,width,height) = bounds
-    for x in range(orig_x,orig_x + width):
-        for y in range(orig_y,orig_y + height):
+    def generator():
+        for (x,y) in coords_in_bounds(bounds):
             distances = [distance((x,y),coord) for coord in coords]
             (score,coord,nearest) = min(distances,key=lambda d: d[0])
             duplicates = [d for d in distances if d[0] == score]
             if len(duplicates) <= 1:
-                yield (score,coord,nearest,sum(s[0] for s in distances))
+                yield coord, (score,nearest,sum(s[0] for s in distances))
             else:
-                yield (score,coord,(-1,-1),sum(s[0] for s in distances))
+                yield coord, (score,(-1,-1),sum(s[0] for s in distances))
+    return dict(generator())
 
 
 def edges(bounds):
@@ -59,34 +67,49 @@ def edges(bounds):
 
 
 def bounded_coords(coords, adj, bounds):
-    infinite_coords = set(closest for (dist,coord,closest,total) in adj if coord in edges(bounds))
+    infinite_coords = set(closest for coord, (dist,closest,total) in adj.items() if coord in edges(bounds))
     return [c for c in coords if c not in infinite_coords]
 
 
 def area(coord, adjacency):
-    return len(list(c for c in adjacency if c[2] == coord))
+    return len(list(c for (k,c) in adjacency.items() if c[1] == coord))
 
 
-def contiguous(coord, adjacency):
-    open_coords = Queue([coord])
+def contiguous_region(coord, adjacency, threshold):
+    open_coords = set()
     closed_coords = set()
+    region_coords = set()
+    open_coords.add(coord)
 
-    print("Checking Coord ====> {}".format(coord))
-
-    while not open_coords.empty():
-        (x,y) = open_coords.get()
-        totals = [a[3] for a in adjacency if a[1] == (x,y)]
-        print("Totals ====> {}".format(totals))
-        if len(totals) > 0:
-            total = totals[0]
-            if total < 32:
-                closed_coords = closed_coords + (x,y)
+    while len(open_coords) > 0:
+        (x,y) = open_coords.pop()
+        closed_coords.add((x, y))
+        if (x,y) in adjacency:
+            total = adjacency[(x,y)][2]
+            if total < threshold:
+                region_coords.add((x,y))
                 neighbors = [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
                 for n in neighbors:
                     if n not in closed_coords:
-                        open_coords.put(n)
-    
-    return closed_coords
+                        open_coords.add(n)
+
+
+    return region_coords
+
+
+def all_contiguous_regions(adjacency,threshold):
+    remaining_cords = set(adjacency.keys())
+    regions = []
+
+    while len(remaining_cords) > 0:
+        coord = remaining_cords.pop()
+        print(coord)
+        region = contiguous_region(coord,adjacency,threshold)
+        regions.append(region)
+        remaining_cords.difference_update(region)
+
+    return regions
+
 
 def real_coords():
     raw = """
@@ -145,11 +168,16 @@ def real_coords():
 
 
 if __name__ == "__main__":
-    print("=========> Day 3 Part 1")
+    print("=========> Day 6 Part 1")
     coords = real_coords()
     bds = bounds(coords)
-    adj = list(adjacency(coords,bds))
+    adj = adjacency(coords,bds)
     bounded = bounded_coords(coords,adj,bds)
     print("Selected finite coordinates {}".format(bounded))
     biggest = max([(c, area(c,adj)) for c in bounded], key=lambda x: x[1])
-    print("Chose maximum sized finite coordinae {}".format(biggest))
+    print("Maximum sized finite coordinate: {}".format(biggest))
+
+    print("=========> Day 6 Part 2")
+    regions = all_contiguous_regions(adj,10000)
+    largest_region = max(regions, key=lambda x: len(x))
+    print("Largest region size: {}".format(len(largest_region)))
