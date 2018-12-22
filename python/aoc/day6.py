@@ -1,4 +1,4 @@
-
+from queue import Queue
 
 def parse_coords(lines):
     parsed = [line.split(",",2) for line in lines if "," in line]
@@ -66,6 +66,27 @@ def bounded_coords(coords, adj, bounds):
 def area(coord, adjacency):
     return len(list(c for c in adjacency if c[2] == coord))
 
+
+def contiguous(coord, adjacency):
+    open_coords = Queue([coord])
+    closed_coords = set()
+
+    print("Checking Coord ====> {}".format(coord))
+
+    while not open_coords.empty():
+        (x,y) = open_coords.get()
+        totals = [a[3] for a in adjacency if a[1] == (x,y)]
+        print("Totals ====> {}".format(totals))
+        if len(totals) > 0:
+            total = totals[0]
+            if total < 32:
+                closed_coords = closed_coords + (x,y)
+                neighbors = [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
+                for n in neighbors:
+                    if n not in closed_coords:
+                        open_coords.put(n)
+    
+    return closed_coords
 
 def real_coords():
     raw = """

@@ -50,3 +50,11 @@ def test_example_area():
 
     assert(area((3,4), adj) == 9)
     assert(area((5,5), adj) == 17)
+
+
+def test_example_contiguous():
+    coords = example_coords()
+    bds = bounds(coords)
+    adj = list(adjacency(coords,bds))
+    region = contiguous((4,3),adj)
+    assert len(region) == 16
