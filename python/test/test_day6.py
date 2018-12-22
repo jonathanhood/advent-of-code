@@ -24,8 +24,8 @@ def test_example_adjacency():
     for coord in result:
         print(coord)
 
-    assert( (2,(2,2),(1,1)) in result)
-    assert( (2,(7,8),(8,9)) in result)
+    assert( (2,(2,2),(1,1),36) in result)
+    assert( (2,(7,8),(8,9),42) in result)
 
 
 def test_example_edges():

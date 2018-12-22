@@ -38,12 +38,12 @@ def adjacency(coords, bounds):
     for x in range(orig_x,orig_x + width):
         for y in range(orig_y,orig_y + height):
             distances = [distance((x,y),coord) for coord in coords]
-            smallest = min(distances,key=lambda d: d[0])
-            duplicates = [d for d in distances if d[0] == smallest[0]]
+            (score,coord,nearest) = min(distances,key=lambda d: d[0])
+            duplicates = [d for d in distances if d[0] == score]
             if len(duplicates) <= 1:
-                yield smallest
+                yield (score,coord,nearest,sum(s[0] for s in distances))
             else:
-                yield (smallest[0],(x,y),(-1,-1))
+                yield (score,coord,(-1,-1),sum(s[0] for s in distances))
 
 
 def edges(bounds):
@@ -59,12 +59,13 @@ def edges(bounds):
 
 
 def bounded_coords(coords, adj, bounds):
-    infinite_coords = set(closest for (dist,coord,closest) in adj if coord in edges(bounds))
+    infinite_coords = set(closest for (dist,coord,closest,total) in adj if coord in edges(bounds))
     return [c for c in coords if c not in infinite_coords]
 
 
 def area(coord, adjacency):
     return len(list(c for c in adjacency if c[2] == coord))
+
 
 def real_coords():
     raw = """
