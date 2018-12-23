@@ -5,6 +5,7 @@ import scala.util.parsing.combinator.RegexParsers
 
 object DaySeven {
   case class Command(name: String, blocks: String)
+  case class Task(name: String, time: Int)
 
   object CommandParser extends RegexParsers {
     val step: Parser[String] = "[A-Z]{1}".r
@@ -26,10 +27,37 @@ object DaySeven {
     sequenceRecursive(Nil, steps, commands)
   }
 
+  @tailrec
+  def execute(steps: Seq[(String,Seq[String])], finished: Set[String], slots: Seq[Option[Task]], time: Int, durationOffset: Int): Int =
+    if(steps.isEmpty && slots.forall(_.isEmpty)) {
+      time
+    } else {
+      val executingSlots = slots.flatten.map(s => s.copy(time = s.time - 1))
+      val (finishedSlots, notFinishedSlots) = executingSlots.partition(_.time <= 0)
+      val canBeStarted = steps.filter(s => s._2.forall(finished.contains)).map(step => Task(step._1,stepValue(step._1) + durationOffset - 1))
+
+      val startingSlots = canBeStarted.sortBy(_.name).take(slots.length - notFinishedSlots.length)
+      val emptySlots = Seq.fill(slots.length - startingSlots.length - notFinishedSlots.length)(Option.empty[Task])
+      val updatedSlots =  (notFinishedSlots ++ startingSlots).map(t => Some(t)) ++ emptySlots
+
+      execute(
+        steps.filterNot(s => startingSlots.exists(_.name == s._1)),
+        finished ++ finishedSlots.map(_.name),
+        updatedSlots,
+        time + 1,
+        durationOffset
+      )
+    }
+
+
   def depends(steps: Seq[String], commands: Seq[Command]): Seq[(String,Seq[String])] =
     steps.map { s =>
       (s,commands.filter(_.blocks == s).map(_.name))
     }
+
+  private val stepOrdering = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  private def stepValue(step: String): Int =
+    stepOrdering.indexOf(step) + 1
 
   @tailrec
   private def sequenceRecursive(finished: Seq[String], remaining: Seq[String], commands: Seq[Command]): Seq[String] =

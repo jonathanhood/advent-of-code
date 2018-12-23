@@ -19,22 +19,38 @@ class DaySevenTest extends FunSuite {
     ))
   }
 
-  test("solve the example") {
+  test("part 1 - solve the example") {
     val parsed = DaySeven.CommandParser.parse(DaySeven.example)
     val result = DaySeven.sequence(parsed)
     assert(result == Seq("C", "A", "B", "D", "F", "E"))
   }
 
-  test("not give a bad solution") {
+  test("part 1 - not give a bad solution") {
     val parsed = DaySeven.CommandParser.parse(DaySeven.input)
     val result = DaySeven.sequence(parsed)
     assert(result.mkString != "ABCDEFGIJHMLNOQPSTRVUWYXZK")
   }
 
-  test("solve part 1") {
+  test("part 1 - solve") {
     val parsed = DaySeven.CommandParser.parse(DaySeven.input)
     val result = DaySeven.sequence(parsed)
     println(s"Day 7 Part 1 - ${result.mkString}")
+  }
+
+  test("part 2 - solve the example") {
+    val parsed = DaySeven.CommandParser.parse(DaySeven.example)
+    val sequenced = DaySeven.sequence(parsed)
+    val depends = DaySeven.depends(sequenced, parsed)
+    val time = DaySeven.execute(depends, Set.empty, Seq(None,None), 0, 0)
+    assert(time == 15)
+  }
+
+  test("part 2 - solve") {
+    val parsed = DaySeven.CommandParser.parse(DaySeven.input)
+    val sequenced = DaySeven.sequence(parsed)
+    val depends = DaySeven.depends(sequenced, parsed)
+    val time = DaySeven.execute(depends, Set.empty, Seq(None,None,None,None,None), 0, 60)
+    println(s"Day 7 part 2 = ${time}")
   }
 
 }
