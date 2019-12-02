@@ -84,6 +84,7 @@ if __name__ == "__main__":
             (pos, value) = replacement.split(",")
             store_result(memory, int(pos), int(value))
         run_program(memory)
+        print(f"address value")
         for peek_pos in args.peek:
-            print(f"{peek_pos} -> {memory[peek_pos]}")
+            print(f"{peek_pos} {memory[peek_pos]}")
 
